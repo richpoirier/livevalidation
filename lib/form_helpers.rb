@@ -24,7 +24,7 @@ module ActionView
       def live_validation(object_name, method)
         if validations = self.instance_variable_get("@#{object_name.to_s}").class.live_validations[method.to_sym] rescue false
           field_name = "#{object_name}_#{method}"
-          initialize_validator(field_name) +
+          initialize_validator(object_name, field_name) +
           validations.map do |type, configuration|
             live_validation_code(field_name, type, configuration)
           end.join(';')
@@ -33,8 +33,11 @@ module ActionView
         end
       end
       
-      def initialize_validator(field_name)
-        "var #{field_name} = new LiveValidation('#{field_name}');"
+      def initialize_validator(object_name, field_name)
+        onValid = "function() {}"
+        onInvalid = "function() { $('#{object_name}' + '_submit').disabled = true }"
+        onFormValid = "function() { $('#{object_name}' + '_submit').disabled = false }"
+        "var #{field_name} = new LiveValidation('#{field_name}', { onValid : #{onValid}, onInvalid : #{onInvalid}, onFormValid : #{onFormValid} });"
       end
       
       def live_validation_code(field_name, type, configuration)
